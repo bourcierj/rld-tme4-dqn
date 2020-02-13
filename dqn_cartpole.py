@@ -40,7 +40,7 @@ if __name__ == '__main__':
     exp_name = get_experiment_name('__DQN__Cartpole-v1__', args)
     writer = None
     if not args.no_tensorboard:
-        writer = SummaryWriter(exp_name)
+        writer = SummaryWriter('runs/'+exp_name)
 
     # register the Agent
     state_dim = 4
@@ -107,7 +107,7 @@ if __name__ == '__main__':
                       .format(str(i), rsum, loss_sum / j, str(j)))
                 if writer is not None:
                     writer.add_scalar('Cumulated_Reward', rsum, i)
-                    # writer.add_scalar('Avg_Reward', rsum / j, i)
+                    # writer.add_scalar('Avg_Reward', rsum / j, i)  # prints 1.0
                     writer.add_scalar('Avg_Loss', loss_sum / j, i)
                     writer.add_scalar('Avg_Q_Value', Qsum / j, i)
 
@@ -121,5 +121,13 @@ if __name__ == '__main__':
                 break
 
     print("Finished. Trained on {} episodes, time: {}"
-          .format(episode, timedelta(time.time() - since)))
+          .format(episode, timedelta(seconds=time.time() - since)))
     env.close()
+
+
+#@TODO:
+# - add checkpointing to save tthe model with highest cumulated reward (maybe bad, how to do better?)
+# - run the experiment several times (eg 10), and observe variability in the curves / results
+# - use stats tracker to do that (see RDFIA)
+# - DONT USE EARLY STOPPING
+
