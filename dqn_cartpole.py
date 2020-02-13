@@ -14,7 +14,7 @@ import time
 from datetime import timedelta
 
 from dqn import DeepQlearningAgent
-from dqn_hparams import hparams_cartpole as hparams
+from dqn_hparams import hparams_cartpole
 
 from utils import *
 
@@ -24,6 +24,7 @@ def parse_args():
                                                  "Gym environment")
     parser.add_argument('--no-tensorboard', action='store_true')
     parser.add_argument('--no-rendering', action='store_true')
+    parser.add_argument('--lr-decay', type=float, default=1.)
     return parser.parse_args()
 
 
@@ -31,13 +32,15 @@ if __name__ == '__main__':
 
     args = parse_args()  # get command line arguments
     # Load optimal hyperparameters
-    for param, value in hparams.items():
+    for param, value in hparams_cartpole.items():
         setattr(args, param, value)
+
+    hparams = get_hyperparams_dict(args)
+    exp_name = get_experiment_name('__DQN__Cartpole-v1__', hparams)
 
     env = gym.make('CartPole-v1')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    exp_name = get_experiment_name('__DQN__Cartpole-v1__', args)
     writer = None
     if not args.no_tensorboard:
         writer = SummaryWriter('runs/'+exp_name)
@@ -45,7 +48,7 @@ if __name__ == '__main__':
     # register the Agent
     state_dim = 4
     n_actions = 2
-    args.lr_decay = 1.
+    # args.lr_decay = 1.
     agent = DeepQlearningAgent(state_dim, n_actions,
                                args.replay_memory_capacity, args.ctarget, args.layers,
                                args.batch_size, args.lr, args.gamma, args.epsilon,
@@ -59,7 +62,7 @@ if __name__ == '__main__':
     random.seed(0)
     torch.manual_seed(0)
 
-    episode_count = 2400
+    episode_count = args.episode_count
     show_every = 100
     reward = 0
     done = False
@@ -70,12 +73,13 @@ if __name__ == '__main__':
     best_rsum = -1e10
     i_best_rsum = 0
     env._max_episode_steps = 10000
-    print('Train for {} episodes: show every {} episodes'.format(episode_count, show_every))
+    print('Train for {} episodes; show every {} episodes if rendering is enabled.'.format(episode_count, show_every))
     print('Using device ', device.type.upper())
     print('Name of experiment: {}'.format(exp_name))
 
     episode = 0
     since = time.time()
+    i = 0
     for i in range(episode_count):
         obs = envm.reset()
         if args.no_rendering:
@@ -105,23 +109,29 @@ if __name__ == '__main__':
             if done:
                 print("Episode: {}: cumulated reward: {}, avg loss: {}, {} actions"
                       .format(str(i), rsum, loss_sum / j, str(j)))
+                avg_loss = loss_sum / j
+                avg_Q = Qsum / j
                 if writer is not None:
                     writer.add_scalar('Cumulated_Reward', rsum, i)
                     # writer.add_scalar('Avg_Reward', rsum / j, i)  # prints 1.0
-                    writer.add_scalar('Avg_Loss', loss_sum / j, i)
-                    writer.add_scalar('Avg_Q_Value', Qsum / j, i)
+                    writer.add_scalar('Avg_Loss', avg_loss, i)
+                    writer.add_scalar('Avg_Q_Value', avg_Q, i)
 
-                # if rsum > best_rsum:
-                #     best_rsum = rsum
-                #     i_best_rsum = agent.checkpoint.epoch
-                #     agent.checkpoint.save(suffix='_best')
-
-                # agent.checkpoint.save()
-                episode += 1
+                if rsum > best_rsum:
+                    best_rsum = rsum
+                    i_best_rsum = i
+                    best_rsum_loss = avg_loss
                 break
 
-    print("Finished. Trained on {} episodes, time: {}"
-          .format(episode, timedelta(seconds=time.time() - since)))
+    print("Finished. Trained on {} episodes, time: {}.\n Max cumulated reward: {} (episode {}, with loss: {}) "
+          .format(i, timedelta(seconds=time.time() - since), best_rsum, i_best_rsum, best_rsum_loss))
+
+    if writer is not None:
+        writer.add_hparams(hparams, {'hparam/Cumulated_Reward': best_rsum,
+                                     'hparam/Episode': i_best_rsum,
+                                     'hparam/Avg_Loss': best_rsum_loss})
+        writer.close()
+
     env.close()
 
 
