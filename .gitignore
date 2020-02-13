@@ -10,6 +10,8 @@ TODO.md
 /papers/
 /figures/
 /documents/
+cartpole-v1/
+LunarLander-v2/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
