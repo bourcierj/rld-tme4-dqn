@@ -60,8 +60,9 @@ class ReplayMemory(object):
 class DeepQlearningAgent():
 
     def __init__(self, state_dim, n_actions, replay_memory_capacity=100000,
-                 ctarget=1000, layers=[200], batch_size=100, lr=0.001, gamma=0.999,
-                 epsilon=0.01, epsilon_decay=0.99999, verbose=False, device=device):
+                 ctarget=1000, layers=[200], batch_size=100, lr=0.001,
+                 gamma=0.999, epsilon=0.01, epsilon_decay=0.99999,
+                 lr_decay=1., device=device):
 
         self.replay_memory = ReplayMemory(replay_memory_capacity)
         self.replay_memory_capacity = replay_memory_capacity
@@ -73,9 +74,13 @@ class DeepQlearningAgent():
         self.gamma = gamma
         self.batch_size = batch_size
 
+        # Learned network
         self.Q = Net(state_dim, n_actions,layers).to(device)
+        # Target network
         self.Q_target = copy.deepcopy(self.Q).to(device)
+
         self.optimizer = optim.Adam(self.Q.parameters(), lr=lr)
+        self.lr_sched = optim.lr_scheduler.ExponentialLR(self.optimizer, lr_decay)
         self.criterion = nn.SmoothL1Loss()
 
         self.lobs = None
@@ -153,6 +158,9 @@ class DeepQlearningAgent():
         if self.t % self.ctarget == 0:
             self.Q_target = copy.deepcopy(self.Q)
 
+        if done:
+            # Decay learning rate
+            self.lr_sched.step()
         # if done:
         #     self.checkpoint.model = self.Q
         #     self.checkpoint.optimizer = self.optimizer
