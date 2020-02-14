@@ -9,7 +9,7 @@ hparams_cartpole = dict(
     ctarget = 1000,
     layers = [200],
     lr = 0.001,
-    lr_decay = 1.,  # @TUNE
+    lr_decay = 1.,
     episode_count = 2400,
     update_frequency = 1  # NOT USED
     )
@@ -17,5 +17,15 @@ hparams_cartpole = dict(
 
 hparams_lunarlander = dict(
 
-
-)
+    gamma = 0.99,
+    epsilon = 0.1,
+    epsilon_decay = 0.99999,
+    batch_size = 1,
+    replay_memory_capacity = 1,
+    ctarget = 1000,
+    layers = [200],
+    lr = 0.0001,
+    lr_decay = 1.,
+    episode_count = 10000,
+    update_frequency = 1  # NOT USED
+    )
