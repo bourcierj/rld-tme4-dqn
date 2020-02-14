@@ -24,7 +24,6 @@ def parse_args():
                                                  "Gym environment")
     parser.add_argument('--no-tensorboard', action='store_true')
     parser.add_argument('--no-rendering', action='store_true')
-    parser.add_argument('--lr-decay', type=float, default=1.)
     return parser.parse_args()
 
 
@@ -48,7 +47,6 @@ if __name__ == '__main__':
     # register the Agent
     state_dim = 4
     n_actions = 2
-    # args.lr_decay = 1.
     agent = DeepQlearningAgent(state_dim, n_actions,
                                args.replay_memory_capacity, args.ctarget, args.layers,
                                args.batch_size, args.lr, args.gamma, args.epsilon,

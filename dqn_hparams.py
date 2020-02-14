@@ -9,7 +9,7 @@ hparams_cartpole = dict(
     ctarget = 1000,
     layers = [200],
     lr = 0.001,
-    lr_decay = None,  # @TUNE
+    lr_decay = 1.,  # @TUNE
     episode_count = 2400,
     update_frequency = 1  # NOT USED
     )
