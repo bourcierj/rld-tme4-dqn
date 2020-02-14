@@ -11,7 +11,10 @@ TODO.md
 /figures/
 /documents/
 cartpole-v1/
-LunarLander-v2/
+lunarlander-v2/
+gridworld-v0/
+/runs/
+rsync-exclude.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
