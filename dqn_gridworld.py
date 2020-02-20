@@ -29,6 +29,9 @@ def parse_args():
     parser.add_argument('--show-every', '--se', type=int, default=500)
     parser.add_argument('--episode-count', '--ec', type=int, default=2500)
     parser.add_argument('--plan', type=int, default=0)
+    # Model parameters
+    parser.add_argument('--no-replay-memory', '--norm', action='store_true')
+    parser.add_argument('--no-target-network', '--notn', action='store_true')
     return parser.parse_args()
 
 
@@ -54,8 +57,22 @@ if __name__ == '__main__':
     # Load optimal hyperparameters
     for param, value in hparams_gridworld.items():
         setattr(args, param, value)
+    IGNORE = {'no-tensorboard', 'no-rendering', 'show-every', 'update-frequency',
+              'plan', 'no-replay-memory', 'no-target-network'}
+    if args.no_replay_memory:
+        args.replay_memory_capacity = 1
+        args.batch_size = 1
+        IGNORE |= {'replay-memory-capacity', 'batch-size'}
+        IGNORE -= {'no-replay-memory'}
+        # hparams = get_hyperparams_dict(args, ignore=IGNORE.union({'replay-memory-capacity', 'ctarget'}))
+    if args.no_target_network:
+        args.ctarget = 1
+        IGNORE |= {'ctarget'}
+        IGNORE -= {'no-target-network'}
+        hparams = get_hyperparams_dict(args)
 
-    hparams = get_hyperparams_dict(args)
+    hparams = get_hyperparams_dict(args, ignore=IGNORE)
+    tb_prefix = 'Gridworld-v0/'
     exp_name = get_experiment_name('__DQN__Gridworld-v0-plan{}__'.format(args.plan),
                                    hparams)
 
