@@ -1,18 +1,14 @@
-import torch
 
-IGNORE = {'no_tensorboard', 'no_rendering', 'show_every', 'update_frequency'
-          'plan'}
-def get_hyperparams_dict(args, ignore=IGNORE):
+
+def get_hyperparams_dict(args, ignore=set()):
 
     hparams = dict()
     for key, value in vars(args).items():
-        if key not in IGNORE:
-            key = key.replace('_','-')
-            if type(value) is list:
-                hparams[key] = torch.tensor(value)
-            else:
-                hparams[key] = value
+        key = key.replace('_','-')
+        if key not in ignore:
+            hparams[key] = value
     return hparams
+
 
 def get_experiment_name(prefix, hparams):
     """Generate a string name for the experiment.
@@ -26,3 +22,4 @@ def get_experiment_name(prefix, hparams):
     hparams_string = '_'.join([f"{key}={value}" for key, value in hparams.items()])
 
     return current_time + '_' + socket.gethostname() + prefix + hparams_string
+

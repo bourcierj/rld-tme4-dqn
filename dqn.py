@@ -51,6 +51,7 @@ class ReplayMemory(object):
         self.position = (self.position + 1) % self.capacity
 
     def sample(self, batch_size):
+        """Samples a minibatch."""
         return random.sample(self.memory, batch_size)
 
     def __len__(self):

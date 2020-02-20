@@ -18,12 +18,15 @@ from dqn_hparams import hparams_lunarlander
 
 from utils import *
 
+
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description="Deep Q-Network on LunarLander-v2"
                                                  "Gym environment")
-    parser.add_argument('--no-tensorboard', action='store_true')
-    parser.add_argument('--no-rendering', action='store_true')
+    parser.add_argument('--no-tensorboard', '--notb', action='store_true')
+    parser.add_argument('--no-rendering', '--nor', action='store_true')
+    parser.add_argument('--show-every', '--se', type=int, default=1500)
+    parser.add_argument('--episode-count', '--ec', type=int, default=10000)
     return parser.parse_args()
 
 
@@ -61,7 +64,7 @@ if __name__ == '__main__':
     torch.manual_seed(0)
 
     episode_count = args.episode_count
-    show_every = 1000
+    show_every = args.show_every
     reward = 0
     done = False
     env.verbose = True
@@ -71,6 +74,7 @@ if __name__ == '__main__':
     best_rsum = -1e10
     i_best_rsum = 0
     env._max_episode_steps = 200
+
     print('Train for {} episodes; show every {} episodes if rendering is enabled.'.format(episode_count, show_every))
     print('Using device ', device.type.upper())
     print('Name of experiment: {}'.format(exp_name))
@@ -110,10 +114,9 @@ if __name__ == '__main__':
                 avg_loss = loss_sum / j
                 avg_Q = Qsum / j
                 if writer is not None:
-                    writer.add_scalar('Cumulated_Reward', rsum, i)
-                    # writer.add_scalar('Avg_Reward', rsum / j, i)  # prints 1.0
-                    writer.add_scalar('Avg_Loss', avg_loss, i)
-                    writer.add_scalar('Avg_Q_Value', avg_Q, i)
+                    writer.add_scalar(tb_prefix+'Cumulated_Reward', rsum, i)
+                    writer.add_scalar(tb_prefix+'Avg_Loss', avg_loss, i)
+                    writer.add_scalar(tb_prefix+'Avg_Q_Value', avg_Q, i)
 
                 if rsum > best_rsum:
                     best_rsum = rsum
@@ -121,13 +124,13 @@ if __name__ == '__main__':
                     best_rsum_loss = avg_loss
                 break
 
-    print("Finished. Trained on {} episodes, time: {}.\n Max cumulated reward: {} (episode {}, with loss: {}) "
+    print("Finished. Trained on {} episodes, time: {}.\nMax cumulated reward: {} (episode {}, with loss: {}) "
           .format(i, timedelta(seconds=time.time() - since), best_rsum, i_best_rsum, best_rsum_loss))
 
     if writer is not None:
-        writer.add_hparams(hparams, {'hparam/Cumulated_Reward': best_rsum,
-                                     'hparam/Episode': i_best_rsum,
-                                     'hparam/Avg_Loss': best_rsum_loss})
+        # writer.add_hparams(hparams, {'hparam/Cumulated_Reward': best_rsum,
+        #                              'hparam/Episode': i_best_rsum,
+        #                              'hparam/Avg_Loss': best_rsum_loss})
         writer.close()
 
     env.close()

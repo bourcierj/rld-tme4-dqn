@@ -19,12 +19,15 @@ from dqn_hparams import hparams_gridworld
 
 from utils import *
 
+
 def parse_args():
     """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description="Deep Q-Network on Gridworld-v0"
+    parser = argparse.ArgumentParser(description="Deep Q-Network on Gridworld-v1"
                                                  "Gym environment")
-    parser.add_argument('--no-tensorboard', action='store_true')
-    parser.add_argument('--no-rendering', action='store_true')
+    parser.add_argument('--no-tensorboard', '--notb', action='store_true')
+    parser.add_argument('--no-rendering', '--nor', action='store_true')
+    parser.add_argument('--show-every', '--se', type=int, default=500)
+    parser.add_argument('--episode-count', '--ec', type=int, default=2500)
     parser.add_argument('--plan', type=int, default=0)
     return parser.parse_args()
 
@@ -63,18 +66,19 @@ if __name__ == '__main__':
     if not args.no_tensorboard:
         writer = SummaryWriter('runs/'+exp_name)
 
-    # register the Agent
-    state_dim = get_features(env.reset()).size
-    n_actions = 4
-    agent = DeepQlearningAgent(state_dim, n_actions,
-                               args.replay_memory_capacity, args.ctarget, args.layers,
-                               args.batch_size, args.lr, args.gamma, args.epsilon,
-                               args.epsilon_decay, args.lr_decay, device=device)
-
     outdir = 'gridworld-v0/dqn-agent-results'
     envm = wrappers.Monitor(env, directory=outdir, force=True, video_callable=False)
     env.setPlan("gridworldPlans/plan{}.txt".format(args.plan),
                 {0: -0.001, 3: 1, 4: 1, 5: -1, 6: -1})
+
+    # register the Agent
+    state_dim = get_features(env.reset()).size
+    n_actions = 4
+
+    agent = DeepQlearningAgent(state_dim, n_actions,
+                               args.replay_memory_capacity, args.ctarget, args.layers,
+                               args.batch_size, args.lr, args.gamma, args.epsilon,
+                               args.epsilon_decay, args.lr_decay, device=device)
 
     env.seed(0)
     np.random.seed(0)
@@ -82,7 +86,7 @@ if __name__ == '__main__':
     torch.manual_seed(0)
 
     episode_count = args.episode_count
-    show_every = 100
+    show_every = args.show_every
     reward = 0
     done = False
     FPS = 0.0001
@@ -132,10 +136,9 @@ if __name__ == '__main__':
                 avg_loss = loss_sum / j
                 avg_Q = Qsum / j
                 if writer is not None:
-                    writer.add_scalar('Cumulated_Reward', rsum, i)
-                    # writer.add_scalar('Avg_Reward', rsum / j, i)  # prints 1.0
-                    writer.add_scalar('Avg_Loss', avg_loss, i)
-                    writer.add_scalar('Avg_Q_Value', avg_Q, i)
+                    writer.add_scalar(tb_prefix+'Cumulated_Reward', rsum, i)
+                    writer.add_scalar(tb_prefix+'Avg_Loss', avg_loss, i)
+                    writer.add_scalar(tb_prefix+'Avg_Q_Value', avg_Q, i)
 
                 if rsum > best_rsum:
                     best_rsum = rsum
@@ -143,13 +146,13 @@ if __name__ == '__main__':
                     best_rsum_loss = avg_loss
                 break
 
-    print("Finished. Trained on {} episodes, time: {}.\n Max cumulated reward: {} (episode {}, with loss: {}) "
+    print("Finished. Trained on {} episodes, time: {}.\nMax cumulated reward: {} (episode {}, with loss: {}) "
           .format(i, timedelta(seconds=time.time() - since), best_rsum, i_best_rsum, best_rsum_loss))
 
     if writer is not None:
-        writer.add_hparams(hparams, {'hparam/Cumulated_Reward': best_rsum,
-                                     'hparam/Episode': i_best_rsum,
-                                     'hparam/Avg_Loss': best_rsum_loss})
+        # writer.add_hparams(hparams, {'hparam/Cumulated_Reward': best_rsum,
+        #                              'hparam/Episode': i_best_rsum,
+        #                              'hparam/Avg_Loss': best_rsum_loss})
         writer.close()
 
     env.close()
