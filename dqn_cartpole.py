@@ -153,11 +153,3 @@ if __name__ == '__main__':
         writer.close()
 
     env.close()
-
-
-#@TODO:
-# - add checkpointing to save tthe model with highest cumulated reward (maybe bad, how to do better?)
-# - run the experiment several times (eg 10), and observe variability in the curves / results
-# - use stats tracker to do that (see RDFIA)
-# - DONT USE EARLY STOPPING
-
