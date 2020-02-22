@@ -1,5 +1,4 @@
 
-import numpy as np
 import random
 import torch
 import torch.nn as nn
@@ -22,9 +21,10 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = self.layers[0](x)
-        for i in range(1, len(self.layers)):
-            x = F.leaky_relu(x)
-            x = self.layers[i](x)
+        x = F.leaky_relu(x)
+        for layer in self.layers[1:]:
+            x = F.leaky_relu(layer(x))
+
         return x
 
 
